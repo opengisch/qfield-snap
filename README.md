@@ -21,7 +21,7 @@ This plugin simplifies the field data collection process by allowing users to qu
 ## Usage
 
 1. **Activate the Plugin:**
-   - Open QField and go to the `Plugins` menu.
+   - Open QField, go to the settings panel, and open the plugin manager.
    - Ensure the `Snap!` plugin is activated.
 
 2. **Add Features with Photos:**
