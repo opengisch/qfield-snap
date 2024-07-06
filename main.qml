@@ -94,7 +94,7 @@ Item {
     let wkt = 'POINT(' + pos.x + ' ' + pos.y + ')'
     
     let geometry = GeometryUtils.createGeometryFromWkt(wkt)
-    let feature = FeatureUtils.createFeature(dashBoard.activeLayer, geometry)
+    let feature = FeatureUtils.createBlankFeature(dashBoard.activeLayer.fields, geometry)
         
     let fieldNames = feature.fields.names
     if (fieldNames.indexOf('photo') > -1) {
@@ -104,6 +104,7 @@ Item {
     }
 
     overlayFeatureFormDrawer.featureModel.feature = feature
+    overlayFeatureFormDrawer.featureModel.resetAttributes(true)
     overlayFeatureFormDrawer.state = 'Add'
     overlayFeatureFormDrawer.open()
   }
