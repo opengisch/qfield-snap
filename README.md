@@ -3,7 +3,7 @@
 The Snap! QField Plugin is a one-click solution for adding features with pictures directly from your device's camera using QField.
 This plugin simplifies the field data collection process by allowing users to quickly capture and attach photos to their geospatial data.
 
-![Teaser](./QFieldForQGIS - 1802933267114451323.gif)
+![Teaser](teaser.gif)
 
 ## Features
 - **One-click feature addition:** Add new features with a single click.
