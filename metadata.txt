@@ -3,5 +3,5 @@ name=Snap!
 description=Digitize points through snapping photos
 author=OPENGIS.ch
 icon=icon.svg
-version=1.0
+version=1.1
 homepage=https://www.opengis.ch/
