@@ -15,6 +15,8 @@ Item {
   property var dashBoard: iface.findItemByObjectName('dashBoard')
   property var overlayFeatureFormDrawer: iface.findItemByObjectName('overlayFeatureFormDrawer')
 
+  property var candidates: ["photo", "picture", "image", "media", "camera"]
+
   Component.onCompleted: {
     iface.addItemToPluginsToolbar(snapButton)
   }
@@ -70,11 +72,19 @@ Item {
       }
       
       let fieldNames = dashBoard.activeLayer.fields.names
-      if (fieldNames.indexOf('photo') == -1 && fieldNames.indexOf('picture') == -1) {
-        mainWindow.displayToast(qsTr('Snap requires the active vector layer to contain a field named \'photo\' or \'picture\''))
+      let fieldMatch = false;
+      for (const candidate of plugin.candidates) {
+        if (fieldNames.indexOf(candidate) >= 0) {
+          fieldMatch = true;
+          break;
+        }
+      }
+      if (!fieldMatch) {
+        mainWindow.displayToast(qsTr('Snap requires the active vector layer to contain a field matching one of the following candidates: %1').arg(plugin.candidates.join(', ')))
         return
       }
 
+      platformUtilities.createDir(qgisProject.homePath, 'DCIM');
       cameraLoader.active = true
     }
   }
@@ -90,17 +100,46 @@ Item {
                                + '.' + FileUtils.fileSuffix(path)
     platformUtilities.renameFile(path, qgisProject.homePath + '/' + relativePath)
     
-    let pos = positionSource.projectedPosition
-    let wkt = 'POINT(' + pos.x + ' ' + pos.y + ')'
+    const pos = GeometryUtils.reprojectPoint(positionSource.projectedPosition, positionSource.coordinateTransformer.destinationCrs, dashBoard.activeLayer.crs);
+    const elevation = positionSource.positionInformation.elevation;
+    let wkt = '';
+    switch (dashBoard.activeLayer.wkbType()) {
+      case Qgis.WkbType.MultiPointZ:
+        wkt = 'MULTIPOINTZ((' + pos.x + ' ' + pos.y + ' ' + elevation + '))';
+        break;
+      case Qgis.WkbType.MultiPointM:
+        wkt = 'MULTIPOINTM((' + pos.x + ' ' + pos.y + ' 0 ))';
+        break;
+      case Qgis.WkbType.MultiPointZM:
+        wkt = 'MULTIPOINTZM((' + pos.x + ' ' + pos.y + ' ' + elevation + ' 0))';
+        break;
+      case Qgis.WkbType.MultiPoint:
+        wkt = 'MULTIPOINT((' + pos.x + ' ' + pos.y + '))';
+        break;
+      case Qgis.WkbType.PointZ:
+        wkt = 'POINTZ(' + pos.x + ' ' + pos.y + ' ' + elevation + ')';
+        break;
+      case Qgis.WkbType.PointM:
+        wkt = 'POINTM(' + pos.x + ' ' + pos.y + ' 0 )';
+        break;
+      case Qgis.WkbType.PointZM:
+        wkt = 'POINTZM(' + pos.x + ' ' + pos.y + ' ' + elevation + ' 0)';
+        break;
+      case Qgis.WkbType.Point:
+        wkt = 'POINT(' + pos.x + ' ' + pos.y + ')';
+        break;
+      default:
+    }
     
     let geometry = GeometryUtils.createGeometryFromWkt(wkt)
     let feature = FeatureUtils.createBlankFeature(dashBoard.activeLayer.fields, geometry)
-        
+
     let fieldNames = feature.fields.names
-    if (fieldNames.indexOf('photo') > -1) {
-      feature.setAttribute(fieldNames.indexOf('photo'), relativePath)
-    } else if (fieldNames.indexOf('picture') > -1) {
-      feature.setAttribute(fieldNames.indexOf('picture'), relativePath)
+    for (const candidate of plugin.candidates) {
+      if (fieldNames.indexOf(candidate) > -1) {
+        feature.setAttribute(fieldNames.indexOf(candidate), relativePath)
+        break;
+      }
     }
 
     overlayFeatureFormDrawer.featureModel.feature = feature
